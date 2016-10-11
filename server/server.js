@@ -50,7 +50,7 @@ var getRecentFromDB = function() {
           var excerpt = res.data.excerpt;
           var image = res.data.lead_image_url;
           var title = res.data.title;
-          // console.log('getting readability', url, image);
+          console.log('getting readability', url, image);
 
           client.hmset('links:' + index, 
             [
@@ -82,7 +82,7 @@ app.get('/getMostRecent', function(req, res) {
   console.log('here in 3333 over!');
   var promiseQueue = [];
     // var redisPromise = new Promise(function(resolve, reject) {
-  for (var i = 0; i < 20; ++i) {
+  for (var i = 0; i < 50; ++i) {
 
     var linkPromise = new Promise((resolve, reject) => {
       client.hgetall('links:' + i, function(error, value) {
@@ -90,15 +90,16 @@ app.get('/getMostRecent', function(req, res) {
           console.log('There is an error fetching for cached stuff, it\'s a sad day! D=', error);
         }
         // console.log('getting cached stuff back!', value);
-        // console.log('what is type of value?>>>>>>', typeof value);
+        // console.log('what is type of value?>>>>>>', value);
         // console.log('what is in landingPageArrray?>>>>>>>>>>>>', landingPage);
         resolve(value);
       });   
     }); 
-    promiseQueue.push(linkPromise);
+    // console.log('what is link promise>>>>>>>>>>>>>>>>>>>>>>>>>>>>>', linkPromise);
+      promiseQueue.push(linkPromise);
   }
   Promise.all(promiseQueue).then((data) => {
-    console.log('in promise.all>>>>>>', data);
+    // console.log('in promise.all>>>>>>', data);
     res.send(data);
   });
 });
