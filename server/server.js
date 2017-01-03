@@ -19,14 +19,16 @@ client.on('error', function(err) {
   console.log('Error' + err);
 });
 
-client.set("string key", "wendy", redis.print);
+//////////testing//////////
+// client.set("string key", "wendy", redis.print);
 
-client.get("username", function(error, value) {
-  if (error) {
-    console.log(error);
-  }
-  console.log('This is the value:', value);
-});
+// client.get("username", function(error, value) {
+//   if (error) {
+//     console.log(error);
+//   }
+//   console.log('This is the value:', value);
+// });
+//////////
 
 var mostRecentLinks = [];
 //get most recent articles (url) from DB 
@@ -35,7 +37,7 @@ var getRecentFromDB = function() {
 
   axios.get('http://localhost:8888/redis')
   .then((res) => {
-    console.log('res in /redis in client server');
+    
     //store in mostRecentLinks, should return 20 links
     //YAY getting stuff back
     mostRecentLinks = res.data;
@@ -79,7 +81,7 @@ var getRecentFromDB = function() {
 
 //client make request to :3333, send back most recent articles info
 app.get('/getMostRecent', function(req, res) {
-  console.log('here in 3333 over!');
+  
   var promiseQueue = [];
     // var redisPromise = new Promise(function(resolve, reject) {
   for (var i = 0; i < 50; ++i) {
@@ -90,19 +92,80 @@ app.get('/getMostRecent', function(req, res) {
           console.log('There is an error fetching for cached stuff, it\'s a sad day! D=', error);
         }
         // console.log('getting cached stuff back!', value);
-        // console.log('what is type of value?>>>>>>', value);
-        // console.log('what is in landingPageArrray?>>>>>>>>>>>>', landingPage);
         resolve(value);
       });   
     }); 
-    // console.log('what is link promise>>>>>>>>>>>>>>>>>>>>>>>>>>>>>', linkPromise);
-      promiseQueue.push(linkPromise);
+    promiseQueue.push(linkPromise);
   }
   Promise.all(promiseQueue).then((data) => {
-    // console.log('in promise.all>>>>>>', data);
     res.send(data);
   });
 });
+
+
+////////// storing temp facebook user info //////////
+app.post('/fbcallback', function(req, res) {
+  
+  var fbid = req.body.fbid;
+  var fbname = req.body.fbname;
+  var avatar = req.body.avatar;
+
+  client.hmset('user:0', [
+    'fbid', fbid,
+    'fbname', fbname,
+    'avatar', avatar
+  ], redis.print);
+
+});
+
+app.get('/fbcallback', function(req, res) {
+  client.hgetall('user:0', function(error, value) {
+    if (error) {
+      console.log('There is an error fetching for cached facebook user, it\'s a sad day! D=', error);
+    }
+    res.send(value);
+  });
+});
+
+app.post('/storeState', function(req, res) {
+  
+  var username = req.body.username;
+  var password = req.body.password;
+  var confirmPassword = req.body.confirmPassword;
+  var message = req.body.message;
+  var fbView = req.body.fbView;
+  var confirmView = req.body.confirmView;
+  var fbid = req.body.fbid;
+  var displayName = req.body.displayName;
+  var avatar = req.body.avatar;
+
+  client.hmset('state:0', [
+    'username', username,
+    'password', password,
+    'confirmPassword', confirmPassword,
+    'message', message,
+    'fbView', fbView,
+    'confirmView', confirmView,
+    'fbid', fbid,
+    'displayName', displayName,
+    'avatar', avatar
+  ], redis.print);
+
+  res.send('stored!');
+});
+
+app.get('/storeState', function(req, res) {
+  client.hgetall('state:0', function(error, value) {
+    if (error) {
+      console.log(error);
+      res.send('invalid');
+    } else {
+      res.send(value);
+    }
+  });
+});
+
+////////////////////////////////////////////////////
 
 
 
